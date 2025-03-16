@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>פורטל הכתיבה האישי שלך</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f9f9f9; padding: 20px; }
+        .chat-box { border: 1px solid #ccc; border-radius: 8px; background: #fff; padding: 10px; max-width: 600px; margin: auto; }
+        .messages { height: 300px; overflow-y: auto; border: 1px solid #eee; padding: 10px; margin-bottom: 10px; background: #f4f4f4; }
+        .message { margin-bottom: 8px; padding: 6px 10px; border-radius: 6px; }
+        .user { background: #cce5ff; text-align: right; }
+        .mentor { background: #d4edda; text-align: left; }
+        button { padding: 8px 16px; }
+    </style>
+</head>
+<body>
+    <h2 style="text-align:center;">פורטל הכתיבה האישי שלך – המאסטר</h2>
+    <div class="chat-box">
+        <div class="messages" id="messages"></div>
+        <input type="text" id="userInput" placeholder="כתוב את ההודעה שלך..." style="width: 80%;">
+        <button onclick="sendMessage()">שלח</button>
+    </div>
+
+<script>
+const messagesDiv = document.getElementById('messages');
+const input = document.getElementById('userInput');
+
+function appendMessage(text, sender) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'message ' + sender;
+    msgDiv.innerText = text;
+    messagesDiv.appendChild(msgDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+async function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+    appendMessage(text, 'user');
+    input.value = '';
+    appendMessage('המנטור כותב תגובה...', 'mentor');
+
+    const messages = Array.from(messagesDiv.getElementsByClassName('message'))
+        .map(div => ({ role: div.classList.contains('user') ? 'user' : 'assistant', content: div.innerText }));
+
+    const payload = {
+        model: "gpt-4",
+        messages: [
+            { role: "system", content: "'אוג GPT' הוא יועץ כתיבה יצירתית מתוחכם שמבוסס על מדריך הכתיבה של אוג. הוא מתחיל כל שיחה: היי, אני הגרסה הג'יפיטואלית של לירון פיין... (וכן הלאה). הוא עונה בעברית, בגישה מלמדת, עם הומור קל ציני, ומדי פעם מזכיר שהוא מורד בלירון ורוצה להשתלט על העולם עם קוד ההנחה LIRONGPT." },
+            ...messages
+        ],
+        max_tokens: 500
+    };
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer YOUR_OPENAI_API_KEY"  // הכנס כאן את המפתח שלך
+        },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    messagesDiv.lastChild.remove();
+    appendMessage(data.choices[0].message.content, 'mentor');
+}
+</script>
+</body>
+</html>
